@@ -2,3 +2,4 @@
 Clase del lado del servidor para datatables admite join,  groupby
 
 PHP 5.0 o mayor
+Adodb 5.17
