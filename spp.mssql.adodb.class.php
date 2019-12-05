@@ -196,11 +196,27 @@ class SSP {
 				$column = $columns[ $columnIdx ];
 
 				$str = $requestColumn['search']['value'];
+				
+				if(isset( $requestColumn['search']['not'] ) && $requestColumn['search']['not'] == 'true')
+					$not = "true";
+				else 
+					$not = "false";
 
-				if ( $requestColumn['searchable'] == 'true' &&
-				 $str != '' ) {
-				 	if(substr_count($str,";") > 0)
-		             {
+				if ( $requestColumn['searchable'] == 'true' && $str != '' ) {
+				 	if(substr_count($str,";") > 0 && $not == "true")
+		            {
+		                 $WhereStr = strpos($str,";");
+		                 $SearchColumn = "(" .$column['db']. " NOT LIKE '" . substr($str,0,$WhereStr). "'";
+		                 for($x = 1;$x < substr_count($str,";");$x++)
+		                 {
+		                     $SearchColumn = $SearchColumn. " AND " .$column['db']. " NOT LIKE '" . substr($str,$WhereStr+1,strpos($str,";",$WhereStr+1) - ($WhereStr+1)). "'";
+		                     $WhereStr = strpos($str,";",$WhereStr+1);
+		                 }
+		                 $SearchColumn = $SearchColumn. " AND " .$column['db']. " NOT LIKE '" . substr($str,$WhereStr+1). "')";
+		                 $columnSearch[] = $SearchColumn;
+		            }
+				 	else if(substr_count($str,";") > 0)
+		            {
 		                 $WhereStr = strpos($str,";");
 		                 $SearchColumn = "(" .$column['db']. " LIKE '" . substr($str,0,$WhereStr). "'";
 		                 for($x = 1;$x < substr_count($str,";");$x++)
@@ -211,6 +227,9 @@ class SSP {
 		                 $SearchColumn = $SearchColumn. " or " .$column['db']. " LIKE '" . substr($str,$WhereStr+1). "')";
 		                 $columnSearch[] = $SearchColumn;
 		            }
+					else if($str != "null" && $not == "true"){
+						$columnSearch[] = "".$column['db']." NOT LIKE '".$str."'";
+					} 
 					else if($str != "null"){
 						// $binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
 						//$binding = self::bind( $bindings, $str, PDO::PARAM_STR );
@@ -310,7 +329,7 @@ class SSP {
 	 *  @return array          Server-side processing response array
 	 */
 	
-	static function complex ( $request, $conn, $table, $primaryKey, $columns, $join=null, $whereResult=null, $whereAll, $group_by = null)
+	static function complex ( $request, $conn, $table, $primaryKey, $columns, $join=null, $whereResult=null, $whereAll, $group_by = null )
     {
         $bindings = array();
         $db = self::db( $conn );
